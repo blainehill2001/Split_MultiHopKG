@@ -64,6 +64,14 @@ def beam_search(pn, e_s, q, e_t, kg, num_steps, beam_size, return_path_component
         action_batch_offset = int_var_cuda(torch.arange(batch_size) * last_k).unsqueeze(1)
         # [batch_size, k] => [batch_size*k]
         action_offset = (action_batch_offset + action_beam_offset).view(-1)
+        action_offset = torch.cuda.LongTensor(action_offset.to(torch.long))
+        # action_offset.to(torch.float64)
+        # log_action_prob.to(torch.float64)
+        # print("this sdfajhafdsjksdfajlk;sfdjka\n\n\n\n\n\n\n")
+        # print(log_action_prob.dtype)
+        # print(action_offset.dtype)
+        # print(log_action_prob.view(-1).dtype)
+        # print(action_offset.view(-1).dtype)
         return (next_r, next_e), log_action_prob, action_offset
 
     def top_k_answer_unique(log_action_dist, action_space):
@@ -115,6 +123,12 @@ def beam_search(pn, e_s, q, e_t, kg, num_steps, beam_size, return_path_component
         next_e = ops.pad_and_cat(next_e_list, padding_value=kg.dummy_e).view(-1)
         log_action_prob = ops.pad_and_cat(log_action_prob_list, padding_value=-ops.HUGE_INT)
         action_offset = ops.pad_and_cat(action_offset_list, padding_value=-1)
+        action_offset = torch.cuda.LongTensor(action_offset.to(torch.long))
+        # print("this sdfajhafdsjksdfajlk;sfdjka\n\n\n\n\n\n\n")
+        # print(log_action_prob.dtype)
+        # print(action_offset.dtype)
+        # print(log_action_prob.view(-1).dtype)
+        # print(action_offset.view(-1).dtype)
         return (next_r, next_e), log_action_prob.view(-1), action_offset.view(-1)
     
     def adjust_search_trace(search_trace, action_offset):

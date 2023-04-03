@@ -171,8 +171,15 @@ class GraphSearchPolicy(nn.Module):
         :param KG: Knowledge graph environment.
         """
         def offset_path_history(p, offset):
+            # print("\n\n\n\ndtype of offset")
+            # # offset = torch.cuda.LongTensor(offset.to(torch.long))
+            # print(offset)
             for i, x in enumerate(p):
                 if type(x) is tuple:
+                    # print(x)
+                    # print("\n\n\n")
+                    # print(offset)
+                    # print(offset.dtype)
                     new_tuple = tuple([_x[:, offset, :] for _x in x])
                     p[i] = new_tuple
                 else:

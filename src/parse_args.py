@@ -227,4 +227,10 @@ parser.add_argument('--tune', type=str, default='',
 parser.add_argument('--grid_search', action='store_true',
                     help='Conduct grid search of hyperparameters')
 
+#Blaine and Jason's Extension
+parser.add_argument('--sparsity_nodes', type=float, default=0.5,
+                    help='Determines level of node masking in sparse KG. 1 represents rich is identical to sparse, 0 represents sparse is empty.')
+parser.add_argument('--sparsity_edges', type=float, default=0.5,
+                    help='Determines level of edge masking in sparse KG. 1 represents rich is identical to sparse, 0 represents sparse is empty.')
+
 args = parser.parse_args()

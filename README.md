@@ -40,6 +40,14 @@ and run the following command to preprocess the datasets.
 `<dataset>` is the name of any dataset folder in the `./data` directory. In our experiments, the five datasets used are: `umls`, `kinship`, `fb15k-237`, `wn18rr` and `nell-995`. 
 `<gpu-ID>` is a non-negative integer number representing the GPU index.
 
+From Blaine and Jason:
+
+We added the following command to split a dataset into a rich KG and sparse KG
+```
+./splitkg.sh configs/<dataset>.sh --sparsity_nodes <float> --sparsity_edge <float>
+```
+where you can insert a float between 0 and 1 to represent how sparse you want your final sparse KG to be (1 represents an indentical rich and sparse KG, 0 represents an empty sparse KG). Here, we consider the "rich" KG to be the given dataset with no masking.
+
 ### Train models
 Then the following commands can be used to train the proposed models and baselines in the paper. By default, dev set evaluation results will be printed when training terminates.
 
@@ -47,16 +55,27 @@ Then the following commands can be used to train the proposed models and baselin
 ```
 ./experiment-emb.sh configs/<dataset>-<emb_model>.sh --train <gpu-ID>
 ```
+Note from Blaine and Jason: if you want to train your embeddings on the rich KG, try:
+```
+./experiment-emb.sh configs/rich_<dataset>-<emb_model>.sh --train <gpu-ID>
+```
 The following embedding-based models are implemented: `distmult`, `complex` and `conve`.
 
 2. Train RL models (policy gradient)
 ```
 ./experiment.sh configs/<dataset>.sh --train <gpu-ID>
 ```
-
+Note from Blaine and Jason: if you want to train your policy on the sparse KG, try:
+```
+./experiment-emb.sh configs/sparse_<dataset>-<emb_model>.sh --train <gpu-ID>
+```
 3. Train RL models (policy gradient + reward shaping)
 ```
 ./experiment-rs.sh configs/<dataset>-rs.sh --train <gpu-ID>
+```
+Note from Blaine and Jason: if you want to train policy + reward shaping on the sparse KG, try:
+```
+./experiment-emb.sh configs/sparse_<dataset>-<emb_model>.sh --train <gpu-ID>
 ```
 
 * Note: To train the RL models using reward shaping, make sure 1) you have pre-trained the embedding-based models and 2) set the file path pointers to the pre-trained embedding-based models correctly ([example configuration file](configs/umls-rs.sh)).
