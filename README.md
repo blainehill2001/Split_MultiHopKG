@@ -1,4 +1,6 @@
-# Multi-Hop Knowledge Graph Reasoning with Reward Shaping
+# Split Multi-Hop Knowledge Graph Reasoning with Reward Shaping
+
+This is an extension of the below paper:
 
 This is the official code release of the following paper: 
 
@@ -21,7 +23,7 @@ nvidia-docker run -v `pwd`:/workspace/MultiHopKG -it multi_hop_kg:v1.0
 ```
 *The rest of the readme assumes that one works interactively inside a container. If you prefer to run experiments outside a container, please change the commands accordingly.*
 
-#### Mannually set up 
+#### Manually set up 
 Alternatively, you can install Pytorch (>=0.4.1) manually and use the Makefile to set up the rest of the dependencies. 
 ```
 make setup
@@ -40,9 +42,7 @@ and run the following command to preprocess the datasets.
 `<dataset>` is the name of any dataset folder in the `./data` directory. In our experiments, the five datasets used are: `umls`, `kinship`, `fb15k-237`, `wn18rr` and `nell-995`. 
 `<gpu-ID>` is a non-negative integer number representing the GPU index.
 
-From Blaine and Jason:
-
-We added the following command to split a dataset into a rich KG and sparse KG
+Rhe following command splits a dataset into a rich KG and sparse KG
 ```
 ./splitkg.sh configs/<dataset>.sh --sparsity_nodes <float> --sparsity_edge <float>
 ```
@@ -55,7 +55,7 @@ Then the following commands can be used to train the proposed models and baselin
 ```
 ./experiment-emb.sh configs/<dataset>-<emb_model>.sh --train <gpu-ID>
 ```
-Note from Blaine and Jason: if you want to train your embeddings on the rich KG, try:
+To train your embeddings on the rich KG, try instead:
 ```
 ./experiment-emb.sh configs/rich_<dataset>-<emb_model>.sh --train <gpu-ID>
 ```
@@ -67,7 +67,7 @@ The following embedding-based models are implemented: `distmult`, `complex` and 
 ```
 Note from Blaine and Jason: if you want to train your policy on the sparse KG, try:
 ```
-./experiment-emb.sh configs/sparse_<dataset>-<emb_model>.sh --train <gpu-ID>
+./experiment.sh configs/sparse_<dataset>.sh --train <gpu-ID>
 ```
 3. Train RL models (policy gradient + reward shaping)
 ```
@@ -75,7 +75,7 @@ Note from Blaine and Jason: if you want to train your policy on the sparse KG, t
 ```
 Note from Blaine and Jason: if you want to train policy + reward shaping on the sparse KG, try:
 ```
-./experiment-emb.sh configs/sparse_<dataset>-<emb_model>.sh --train <gpu-ID>
+./experiment-rs.sh configs/sparse_<dataset>-rs.sh --train <gpu-ID>
 ```
 
 * Note: To train the RL models using reward shaping, make sure 1) you have pre-trained the embedding-based models and 2) set the file path pointers to the pre-trained embedding-based models correctly ([example configuration file](configs/umls-rs.sh)).
