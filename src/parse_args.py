@@ -232,5 +232,8 @@ parser.add_argument('--sparsity_nodes', type=float, default=0.5,
                     help='Determines level of node masking in sparse KG. 1 represents rich is identical to sparse, 0 represents sparse is empty.')
 parser.add_argument('--sparsity_edges', type=float, default=0.5,
                     help='Determines level of edge masking in sparse KG. 1 represents rich is identical to sparse, 0 represents sparse is empty.')
+# Knowledge Graph with Bert
+parser.add_argument('--kg_bert', type=bool, default=False,
+                    help='Use roBerta embedding for knowledge graph')
 
 args = parser.parse_args()

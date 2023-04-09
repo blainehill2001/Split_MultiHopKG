@@ -22,8 +22,8 @@ from src.parse_args import args
 import src.data_utils as data_utils
 import src.eval
 from src.hyperparameter_range import hp_range
-from src.knowledge_graph import KnowledgeGraph
-from src.emb.fact_network import ComplEx, ConvE, DistMult
+from src.knowledge_graph import KnowledgeGraph, KnowledgeGraphBert
+from src.emb.fact_network import ComplEx, ConvE, DistMult, ConvE_BERT, DistMult_BERT
 from src.emb.fact_network import get_conve_kg_state_dict, get_complex_kg_state_dict, get_distmult_kg_state_dict
 from src.emb.emb import EmbeddingBasedMethod
 from src.rl.graph_search.pn import GraphSearchPolicy
@@ -150,6 +150,8 @@ def initialize_model_directory(args, random_seed=None):
         initialization_tag,
         hyperparam_sig
     )
+    if args.kg_bert:
+        model_sub_dir += '-bertKG'
     if args.model == 'set':
         model_sub_dir += '-{}'.format(args.beam_size)
         model_sub_dir += '-{}'.format(args.num_paths_per_entity)
@@ -180,7 +182,10 @@ def construct_model(args):
     """
     Construct NN graph.
     """
-    kg = KnowledgeGraph(args)
+    if args.kg_bert:
+        kg = KnowledgeGraphBert(args)
+    else:
+        kg = KnowledgeGraph(args)
     if args.model.endswith('.gc'):
         kg.load_fuzzy_facts()
 
@@ -197,20 +202,20 @@ def construct_model(args):
             fn = ComplEx(fn_args)
             fn_kg = KnowledgeGraph(fn_args)
         elif fn_model == 'distmult':
-            fn = DistMult(fn_args)
-            fn_kg = KnowledgeGraph(fn_args)
+            fn = DistMult(fn_args) if not args.kg_bert else DistMult_BERT(fn_args)
+            fn_kg = KnowledgeGraph(fn_args) if not args.kg_bert else KnowledgeGraphBert(fn_args)
         elif fn_model == 'conve':
-            fn = ConvE(fn_args, kg.num_entities)
-            fn_kg = KnowledgeGraph(fn_args)
+            fn = ConvE(fn_args, kg.num_entities) if not args.kg_bert else ConvE_BERT(fn_args, kg.num_entities)
+            fn_kg = KnowledgeGraph(fn_args) if not args.kg_bert else KnowledgeGraphBert(fn_args)
         lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
     elif args.model == 'complex':
-        fn = ComplEx(args)
+        fn = ComplEx(args) 
         lf = EmbeddingBasedMethod(args, kg, fn)
     elif args.model == 'distmult':
-        fn = DistMult(args)
+        fn = DistMult(args) if not args.kg_bert else DistMult_BERT(args)
         lf = EmbeddingBasedMethod(args, kg, fn)
     elif args.model == 'conve':
-        fn = ConvE(args, kg.num_entities)
+        fn = ConvE(args, kg.num_entities) if not args.kg_bert else ConvE_BERT(args, kg.num_entities)
         lf = EmbeddingBasedMethod(args, kg, fn)
     else:
         raise NotImplementedError

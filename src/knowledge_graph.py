@@ -401,3 +401,33 @@ class KnowledgeGraph(nn.Module):
     @property
     def dummy_start_r(self):
         return START_RELATION_ID
+
+
+
+"""
+ Jason's Extension
+ Knowledge Graph Environment embedded with pretrained language model (roberta).
+"""
+from src.bert.roberta import RoBertaEmbedding
+
+class KnowledgeGraphBert(KnowledgeGraph):
+    def __init__(self, args):
+        print("Using BERT embedded Knowledge Graph")
+        super(KnowledgeGraphBert, self).__init__(args)
+
+        self.bert_embedding = RoBertaEmbedding()
+        assert self.entity_dim == self.relation_dim
+        
+        self.l1 = nn.Linear(768, self.entity_dim)
+        torch.nn.init.xavier_uniform_(self.l1.weight)
+
+
+    def get_bert_embeddings(self, batch_head, batch_relation, batch_tail):
+        assert batch_head.shape == batch_relation.shape
+        assert batch_head.shape == batch_tail.shape
+        head_entity = [self.id2entity[h.item()] for h in batch_head]
+        relation = [self.id2relation[r.item()] for r in batch_relation]
+        tail_entity = [self.id2entity[t.item()] for t in batch_tail]
+        H, R, T = self.bert_embedding(head_entity, relation, tail_entity)
+        
+        return self.EDropout(self.l1(H)), self.RDropout(self.l1(R)), self.EDropout(self.l1(T))
