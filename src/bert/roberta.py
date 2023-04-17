@@ -18,16 +18,19 @@ class RoBertaEmbedding(nn.Module):
         self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base', add_prefix_space=True)
 
         # freeze roberta for now
-        for param in self.bert.parameters():
-            param.requires_grad = False
+        for name, param in self.bert.named_parameters():
+            if name.split('.')[0] == 'pooler':
+                param.requires_grad = True
+            else:
+                param.requires_grad = False
 
     def forward(self, head_entity, relation, tail_entity):
         batch_tokens = []
         batch_segment_ids = []
         for h, r, t in zip(head_entity, relation, tail_entity):
-            h_token = self.tokenizer.tokenize(h)
-            r_token = self.tokenizer.tokenize(r)
-            t_token = self.tokenizer.tokenize(t)
+            h_token = self.tokenizer.tokenize(h.replace('_',' '))
+            r_token = self.tokenizer.tokenize(r.replace('_',' '))
+            t_token = self.tokenizer.tokenize(t.replace('_',' '))
             tokens = ["[CLS]"] + h_token + ["[SEP]"] + r_token + ["[SEP]"] + t_token + ["[SEP]"]
             segment_ids = [-1] + len(h_token)*[0] + [-1] + len(r_token)*[1] + [-1] + len(t_token)*[2] + [-1]
             for _ in range(MAX_LENGTH - len(segment_ids)):
