@@ -415,14 +415,28 @@ class KnowledgeGraphBert(KnowledgeGraph):
         print("Using BERT embedded Knowledge Graph")
         super(KnowledgeGraphBert, self).__init__(args)
 
-        self.bert_embedding = RoBertaEmbedding()
+        self.bert_embedding = RoBertaEmbedding(labels=self.num_entities)
         
-        self.l1 = nn.Linear(768, self.entity_dim)
-        torch.nn.init.xavier_uniform_(self.l1.weight)
-        self.l2 = nn.Linear(768, self.relation_dim)
-        torch.nn.init.xavier_uniform_(self.l2.weight)
-        self.l3 = nn.Linear(768, self.entity_dim)
-        torch.nn.init.xavier_uniform_(self.l3.weight)
+        # self.l1 = nn.Linear(768, self.entity_dim)
+        # torch.nn.init.xavier_uniform_(self.l1.weight)
+        # self.l2 = nn.Linear(768, self.relation_dim)
+        # torch.nn.init.xavier_uniform_(self.l2.weight)
+        # self.l3 = nn.Linear(768, self.entity_dim)
+        # torch.nn.init.xavier_uniform_(self.l3.weight)
+
+        # self.l1 = nn.Linear(768,1)
+        # torch.nn.init.xavier_uniform_(self.l1.weight)
+        # self.l2 = nn.Linear(768,1)
+        # torch.nn.init.xavier_uniform_(self.l2.weight)
+
+        # self.proj = nn.Sequential(
+        #     # self.l1,
+        #     # nn.ReLU(),
+        #     self.EDropout,
+        #     self.l2,
+        #     nn.Sigmoid()
+        # )
+        
 
 
     def get_bert_embeddings(self, batch_head, batch_relation, batch_tail):
@@ -431,5 +445,14 @@ class KnowledgeGraphBert(KnowledgeGraph):
         head_entity = [self.id2entity[h.item()] for h in batch_head]
         relation = [self.id2relation[r.item()] for r in batch_relation]
         tail_entity = [self.id2entity[t.item()] for t in batch_tail]
-        H, R, T = self.bert_embedding(head_entity, relation, tail_entity)
-        return self.EDropout(self.l1(H)), self.RDropout(self.l2(R)), self.EDropout(self.l3(T))
+        # H, R, T = self.bert_embedding(head_entity, relation, tail_entity)
+        Score = self.bert_embedding(head_entity, relation, tail_entity)
+        return self.proj(Score)
+
+
+    def get_bert_logits(self, batch_head, batch_relation):
+        head_entity = [self.id2entity[h.item()] for h in batch_head]
+        relation = [self.id2relation[r.item()] for r in batch_relation]
+        # H, R, T = self.bert_embedding(head_entity, relation, tail_entity)
+        Score = self.bert_embedding(head_entity, relation)
+        return Score

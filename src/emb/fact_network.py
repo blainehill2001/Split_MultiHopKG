@@ -305,17 +305,13 @@ class DistMult_BERT(DistMult):
 
     def forward(self, e1, r, kg):
         kg = kg.to(e1.device)
-        S = []
-        for e2 in range(len(kg.entity2id)):
-            S.append(self.forward_fact(e1, r, torch.zeros_like(e1)+e2, kg))
-        S = torch.stack(S,dim=1).squeeze(-1).to(e1.device)
+        S = kg.get_bert_logits(e1,r)
         return S
 
     def forward_fact(self, e1, r, e2, kg):
         kg = kg.to(e1.device)
-        E1, R, E2 = kg.get_bert_embeddings(e1,r,e2)
-        S = torch.sum(E1 * R * E2, dim=1, keepdim=True)
-        S = F.sigmoid(S)
+        S = kg.get_bert_logits(e1,r)
+        S = S[torch.arange(S.shape[0]), e2]
         return S
     
 
