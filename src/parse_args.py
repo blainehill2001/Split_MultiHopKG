@@ -235,5 +235,7 @@ parser.add_argument('--sparsity_edges', type=float, default=0.5,
 # Knowledge Graph with Bert
 parser.add_argument('--kg_bert', type=bool, default=False,
                     help='Use roBerta embedding for knowledge graph')
+parser.add_argument('--weight_decay', type=float, default=0.02,
+                    help='weight decay')
 
 args = parser.parse_args()

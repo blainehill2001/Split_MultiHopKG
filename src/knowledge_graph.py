@@ -405,54 +405,68 @@ class KnowledgeGraph(nn.Module):
 
 
 """
- Jason's Extension
- Knowledge Graph Environment embedded with pretrained language model (roberta).
+ Jason's Extension 2
+ Knowledge Graph Environment embedded with pretrained prompt language model.
 """
-from src.bert.roberta import RoBertaEmbedding
+from openprompt.prompts import ManualTemplate, ManualVerbalizer, SoftTemplate, SoftVerbalizer
+from openprompt.plms import load_plm
+from openprompt import PromptDataLoader, PromptForClassification
+
+from src.bert.prompt import get_verbalizer, get_template, wrap_data, to_device
+import torch.nn.functional as F
 
 class KnowledgeGraphBert(KnowledgeGraph):
     def __init__(self, args):
-        print("Using BERT embedded Knowledge Graph")
+        print("Using Prompt embedded Knowledge Graph")
         super(KnowledgeGraphBert, self).__init__(args)
 
-        self.bert_embedding = RoBertaEmbedding(labels=self.num_entities)
+
+        self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("bert","bert-large-uncased")
+        # self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("t5","t5-large")
+
+        # define verbalizer
+        entity_labels = get_verbalizer(self.id2entity)
+        # self.promptVerbalizer = ManualVerbalizer(tokenizer=self.tokenizer, label_words=entity_labels, post_log_softmax=False)
+        self.promptVerbalizer = SoftVerbalizer(model = self.plm, tokenizer=self.tokenizer, classes=entity_labels)
+
+        # define template
+        template_text = get_template()
+        self.promptTemplate = SoftTemplate(
+            model = self.plm,
+            text = template_text,
+            tokenizer = self.tokenizer
+        )
+
+        # define prompt model
+        self.promptModel = PromptForClassification(
+            template = self.promptTemplate,
+            plm = self.plm,
+            verbalizer = self.promptVerbalizer,
+            freeze_plm=False
+        ).cuda()
+
+        # for name, param in self.promptModel.named_parameters():
+        #     if "bert" in name:
+        #         param.requires_grad = False
+        #     else:
+        #         param.requires_grad = True
         
-        # self.l1 = nn.Linear(768, self.entity_dim)
-        # torch.nn.init.xavier_uniform_(self.l1.weight)
-        # self.l2 = nn.Linear(768, self.relation_dim)
-        # torch.nn.init.xavier_uniform_(self.l2.weight)
-        # self.l3 = nn.Linear(768, self.entity_dim)
-        # torch.nn.init.xavier_uniform_(self.l3.weight)
 
-        # self.l1 = nn.Linear(768,1)
-        # torch.nn.init.xavier_uniform_(self.l1.weight)
-        # self.l2 = nn.Linear(768,1)
-        # torch.nn.init.xavier_uniform_(self.l2.weight)
-
-        # self.proj = nn.Sequential(
-        #     # self.l1,
-        #     # nn.ReLU(),
-        #     self.EDropout,
-        #     self.l2,
-        #     nn.Sigmoid()
-        # )
-        
-
-
-    def get_bert_embeddings(self, batch_head, batch_relation, batch_tail):
-        assert batch_head.shape == batch_relation.shape
-        assert batch_head.shape == batch_tail.shape
+    def get_prompt_logits(self, batch_head, batch_relation):
         head_entity = [self.id2entity[h.item()] for h in batch_head]
         relation = [self.id2relation[r.item()] for r in batch_relation]
-        tail_entity = [self.id2entity[t.item()] for t in batch_tail]
-        # H, R, T = self.bert_embedding(head_entity, relation, tail_entity)
-        Score = self.bert_embedding(head_entity, relation, tail_entity)
-        return self.proj(Score)
-
-
-    def get_bert_logits(self, batch_head, batch_relation):
-        head_entity = [self.id2entity[h.item()] for h in batch_head]
-        relation = [self.id2relation[r.item()] for r in batch_relation]
-        # H, R, T = self.bert_embedding(head_entity, relation, tail_entity)
-        Score = self.bert_embedding(head_entity, relation)
-        return Score
+        data = wrap_data(head_entity, relation)
+        data_loader = PromptDataLoader(
+            dataset = data,
+            tokenizer = self.tokenizer,
+            template = self.promptTemplate,
+            tokenizer_wrapper_class= self.WrapperClass,
+            max_seq_length=60,
+            batch_size=len(data),
+            shuffle=False,
+            # decoder_max_length=10,
+        )
+        for d in data_loader:
+            d = to_device(d,batch_head.device)
+            res =  F.sigmoid(self.promptModel(d))
+            return res

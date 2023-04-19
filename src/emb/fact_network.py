@@ -305,12 +305,12 @@ class DistMult_BERT(DistMult):
 
     def forward(self, e1, r, kg):
         kg = kg.to(e1.device)
-        S = kg.get_bert_logits(e1,r)
+        S = kg.get_prompt_logits(e1,r)
         return S
 
     def forward_fact(self, e1, r, e2, kg):
         kg = kg.to(e1.device)
-        S = kg.get_bert_logits(e1,r)
+        S = kg.get_prompt_logits(e1,r)
         S = S[torch.arange(S.shape[0]), e2]
         return S
     

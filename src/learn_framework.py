@@ -67,8 +67,15 @@ class LFramework(nn.Module):
         self.print_all_model_parameters()
 
         if self.optim is None:
-            self.optim = optim.Adam(
-                filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
+            no_decay = ['bias', 'LayerNorm.weight']
+            optimizer_grouped_parameters = [
+                {'params': [p for n, p in self.named_parameters() if not any(nd in n for nd in no_decay)], 'weight_decay': self.args.weight_decay},
+                {'params': [p for n, p in self.named_parameters() if any(nd in n for nd in no_decay)], 'weight_decay': 0.0},
+            ]
+            self.optim = optim.AdamW(optimizer_grouped_parameters, lr=self.learning_rate)
+            
+            # self.optim = optim.Adam(
+            #     filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate)
 
         # Track dev metrics changes
         best_dev_metrics = 0
@@ -194,14 +201,15 @@ class LFramework(nn.Module):
 
     def forward(self, examples, verbose=False):
         pred_scores = []
-        for example_id in tqdm(range(0, len(examples), self.batch_size)):
-            mini_batch = examples[example_id:example_id + self.batch_size]
-            mini_batch_size = len(mini_batch)
-            if len(mini_batch) < self.batch_size:
-                self.make_full_batch(mini_batch, self.batch_size)
-            pred_score = self.predict(mini_batch, verbose=verbose)
-            pred_scores.append(pred_score[:mini_batch_size])
-        scores = torch.cat(pred_scores)
+        with torch.no_grad():
+            for example_id in tqdm(range(0, len(examples), self.batch_size)):
+                mini_batch = examples[example_id:example_id + self.batch_size]
+                mini_batch_size = len(mini_batch)
+                if len(mini_batch) < self.batch_size:
+                    self.make_full_batch(mini_batch, self.batch_size)
+                pred_score = self.predict(mini_batch, verbose=verbose)
+                pred_scores.append(pred_score[:mini_batch_size])
+            scores = torch.cat(pred_scores)
         return scores
 
     def format_batch(self, batch_data, num_labels=-1, num_tiles=1):
