@@ -412,16 +412,14 @@ from openprompt.prompts import ManualTemplate, ManualVerbalizer, SoftTemplate, S
 from openprompt.plms import load_plm
 from openprompt import PromptDataLoader, PromptForClassification
 
-from src.bert.prompt import get_verbalizer, get_template, wrap_data, to_device
+from src.plm.prompt import get_verbalizer, get_template, wrap_data, to_device
 import torch.nn.functional as F
 
-class KnowledgeGraphBert(KnowledgeGraph):
+class KnowledgeGraphPLM(KnowledgeGraph):
     def __init__(self, args):
         print("Using Prompt embedded Knowledge Graph")
-        super(KnowledgeGraphBert, self).__init__(args)
+        super(KnowledgeGraphPLM, self).__init__(args)
 
-
-        # self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("bert","bert-large-uncased")
         self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("t5","t5-base")
 
         # define verbalizer
@@ -445,12 +443,6 @@ class KnowledgeGraphBert(KnowledgeGraph):
             freeze_plm=False
         ).cuda()
 
-        # for name, param in self.promptModel.named_parameters():
-        #     if "bert" in name:
-        #         param.requires_grad = False
-        #     else:
-        #         param.requires_grad = True
-        
 
     def get_prompt_logits(self, batch_head, batch_relation):
         head_entity = [self.id2entity[h.item()] for h in batch_head]

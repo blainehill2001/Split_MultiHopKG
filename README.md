@@ -53,7 +53,7 @@ Then the following commands can be used to train the proposed models and baselin
 ```
 ./experiment-emb.sh configs/rich_<dataset>-<emb_model>.sh --train <gpu-ID>
 ```
-The following embedding-based models are implemented: `distmult`, `complex` and `conve`.
+The following embedding-based models are implemented: `distmult`, `complex`, `conve` and `plm` (extension). 
 
 2. Train RL models (policy gradient)
 ```
@@ -67,7 +67,8 @@ The following embedding-based models are implemented: `distmult`, `complex` and 
 
 Please ensure that under /configs you create a `<rich/sparse>_<dataset>[-<emb_model>].sh` or `<rich/sparse>_<dataset>[-rs].sh` from the original code's given KGs. 
 
-* Note: To train the RL models using reward shaping, make sure 1) you have pre-trained the embedding-based models and 2) set the file path pointers to the pre-trained embedding-based models correctly ([example configuration file](configs/umls-rs.sh)).
+* Note: To train the RL models using reward shaping, make sure 1) you have pre-trained the embedding-based models 2) set the file path pointers to the pre-trained embedding-based models correctly ([example configuration file](configs/umls-rs.sh)) 3) if you want to use two pre-trained embedding plm models, set model to `plms` and two file paths
+
 
 ### Evaluate pretrained models
 To generate the evaluation results of a pre-trained model, simply change the `--train` flag in the commands above to `--inference`. These will print out the H@1, H@3, H@5, H@10, and MRR performance on both dev and test sets.

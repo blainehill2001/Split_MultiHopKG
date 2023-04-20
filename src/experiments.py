@@ -22,8 +22,8 @@ from src.parse_args import args
 import src.data_utils as data_utils
 import src.eval
 from src.hyperparameter_range import hp_range
-from src.knowledge_graph import KnowledgeGraph, KnowledgeGraphBert
-from src.emb.fact_network import ComplEx, ConvE, DistMult, ConvE_BERT, DistMult_BERT
+from src.knowledge_graph import KnowledgeGraph, KnowledgeGraphPLM
+from src.emb.fact_network import ComplEx, ConvE, DistMult, FnPLM
 from src.emb.fact_network import get_conve_kg_state_dict, get_complex_kg_state_dict, get_distmult_kg_state_dict
 from src.emb.emb import EmbeddingBasedMethod
 from src.rl.graph_search.pn import GraphSearchPolicy
@@ -139,6 +139,12 @@ def initialize_model_directory(args, random_seed=None):
             args.feat_dropout_rate,
             args.label_smoothing_epsilon
         )
+    elif args.model == 'plm':
+        hyperparam_sig = 'lr{}-wd{}-{}'.format(
+            args.learning_rate,
+            args.weight_decay,
+            args.label_smoothing_epsilon
+        )
     else:
         raise NotImplementedError
 
@@ -150,8 +156,6 @@ def initialize_model_directory(args, random_seed=None):
         initialization_tag,
         hyperparam_sig
     )
-    if args.kg_bert:
-        model_sub_dir += '-plm'
     if args.model == 'set':
         model_sub_dir += '-{}'.format(args.beam_size)
         model_sub_dir += '-{}'.format(args.num_paths_per_entity)
@@ -182,10 +186,7 @@ def construct_model(args):
     """
     Construct NN graph.
     """
-    if args.kg_bert:
-        kg = KnowledgeGraphBert(args)
-    else:
-        kg = KnowledgeGraph(args)
+    kg = KnowledgeGraph(args)
     if args.model.endswith('.gc'):
         kg.load_fuzzy_facts()
 
@@ -201,21 +202,40 @@ def construct_model(args):
         if fn_model == 'complex':
             fn = ComplEx(fn_args)
             fn_kg = KnowledgeGraph(fn_args)
+            lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
         elif fn_model == 'distmult':
-            fn = DistMult(fn_args) if not args.kg_bert else DistMult_BERT(fn_args)
-            fn_kg = KnowledgeGraph(fn_args) if not args.kg_bert else KnowledgeGraphBert(fn_args)
+            fn = DistMult(fn_args)
+            fn_kg = KnowledgeGraph(fn_args)
+            lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
         elif fn_model == 'conve':
             fn = ConvE(fn_args, kg.num_entities)
-            fn_kg = KnowledgeGraph(fn_args) if not args.kg_bert else KnowledgeGraphBert(fn_args)
-        lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
+            fn_kg = KnowledgeGraph(fn_args)
+            lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
+        elif fn_model == 'plm':
+            fn = FnPLM(fn_args)
+            kg = KnowledgeGraphPLM(args)
+            fn_kg = KnowledgeGraphPLM(fn_args)
+            lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
+        elif fn_model == 'plms':
+            fn = FnPLM(fn_args)
+            kg = KnowledgeGraphPLM(args)
+            fn_kg1 = KnowledgeGraphPLM(fn_args)
+            fn_kg2 = KnowledgeGraphPLM(fn_args)
+            lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg1, fn, fn_kg2)
+        else:
+            assert False
     elif args.model == 'complex':
         fn = ComplEx(args) 
         lf = EmbeddingBasedMethod(args, kg, fn)
     elif args.model == 'distmult':
-        fn = DistMult(args) if not args.kg_bert else DistMult_BERT(args)
+        fn = DistMult(args)
         lf = EmbeddingBasedMethod(args, kg, fn)
     elif args.model == 'conve':
         fn = ConvE(args, kg.num_entities)
+        lf = EmbeddingBasedMethod(args, kg, fn)
+    elif args.model == 'plm':
+        kg = KnowledgeGraphPLM(args)
+        fn = FnPLM(args)
         lf = EmbeddingBasedMethod(args, kg, fn)
     else:
         raise NotImplementedError
@@ -254,6 +274,11 @@ def inference(lf):
         lf.secondary_kg.load_state_dict(complex_kg_state_dict)
         distmult_kg_state_dict = get_distmult_kg_state_dict(torch.load(args.distmult_state_dict_path))
         lf.tertiary_kg.load_state_dict(distmult_kg_state_dict)
+    elif args.model == 'plms':
+        kg_state_dict = get_plm_kg_state_dict(torch.load(args.plm_state_dict_path))
+        lf.kg.load_state_dict(conve_kg_state_dict)
+        secondary_kg_state_dict = get_plm_kg_state_dict(torch.load(args.plm_state_dict_path2))
+        lf.secondary_kg.load_state_dict(secondary_kg_state_dict)
     else:
         lf.load_checkpoint(get_checkpoint_path(args))
     entity_index_path = os.path.join(args.data_dir, 'entity2id.txt')

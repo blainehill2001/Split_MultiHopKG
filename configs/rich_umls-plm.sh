@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 data_dir="data/umls-rich"
-model="distmult"
+model="plm"
 add_reversed_training_edges="False"
 group_examples_by_query="True"
 entity_dim=200
@@ -10,7 +10,6 @@ num_rollouts=5
 bucket_interval=10
 num_epochs=80
 num_wait_epochs=45
-# batch_size=64
 batch_size=128
 train_batch_size=128 # t5-base
 dev_batch_size=64

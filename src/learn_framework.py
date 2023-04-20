@@ -96,7 +96,7 @@ class LFramework(nn.Module):
             if self.rl_variation_tag.startswith('rs'):
                 self.fn.eval()
                 self.fn_kg.eval()
-                if self.model.endswith('hypere'):
+                if self.model.endswith('hypere') or self.model.endswith('plms'):
                     self.fn_secondary_kg.eval()
             self.batch_size = self.train_batch_size
             random.shuffle(train_data)

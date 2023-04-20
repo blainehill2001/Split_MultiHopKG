@@ -246,84 +246,31 @@ def get_distmult_kg_state_dict(state_dict):
 
 """
  Jason's Extension
- Fact scoring networks for RoBerta embedded Knowledge Graph.
+ Fact scoring networks for PLM embedded Knowledge Graph.
 """
-
-
-class ConvE_BERT(ConvE):
-    def __init__(self, args, num_entities):
-        super(ConvE_BERT, self).__init__(args, num_entities)
-
-    def forward(self, e1, r, kg):
-        kg = kg.to(e1.device)
-        S = []
-        for e2 in range(len(kg.entity2id)):
-            S.append(self.forward_fact(e1, r, torch.zeros_like(e1)+e2, kg))
-        S = torch.stack(S,dim=1).squeeze(-1).to(e1.device)
-        return S
-
-    def forward_fact(self, e1, r, e2, kg):
-        """
-        Compute network scores of the given facts.
-        :param e1: [batch_size]
-        :param r:  [batch_size]
-        :param e2: [batch_size]
-        :param kg:
-        """
-        # print(e1.size(), r.size(), e2.size())
-        # print(e1.is_contiguous(), r.is_contiguous(), e2.is_contiguous())
-        # print(e1.min(), r.min(), e2.min())
-        # print(e1.max(), r.max(), e2.max())
-        kg = kg.to(e1.device)
-        E1, R, E2 = kg.get_bert_embeddings(e1,r,e2)
-        E1 = E1.view(-1, 1, self.emb_2D_d1, self.emb_2D_d2)
-        R = R.view(-1, 1, self.emb_2D_d1, self.emb_2D_d2)
-
-        stacked_inputs = torch.cat([E1, R], 2)
-        stacked_inputs = self.bn0(stacked_inputs)
-
-        X = self.conv1(stacked_inputs)
-        # X = self.bn1(X)
-        X = F.relu(X)
-        X = self.FeatureDropout(X)
-        X = X.view(-1, self.feat_dim)
-        X = self.fc(X)
-        X = self.HiddenDropout(X)
-        X = self.bn2(X)
-        X = F.relu(X)
-        X = torch.matmul(X.unsqueeze(1), E2.unsqueeze(2)).squeeze(2)
-        X += self.b[e2].unsqueeze(1)
-
-        S = F.sigmoid(X)
-        return S
-
-
-
-class DistMult_BERT(DistMult):
+class FnPLM(nn.Module):
     def __init__(self, args):
-        super(DistMult_BERT, self).__init__(args)
+        super(FnPLM, self).__init__()
 
     def forward(self, e1, r, kg):
         kg = kg.to(e1.device)
         S = kg.get_prompt_logits(e1,r)
         return S
 
-    def forward_fact(self, e1, r, e2, kg):
+    def forward_fact(self, e1, r, e2, kg, secondary_kg=None):
         kg = kg.to(e1.device)
         S = kg.get_prompt_logits(e1,r)
         S = S[torch.arange(S.shape[0]), e2].unsqueeze(1)
+        if secondary_kg is not None:
+            secondary_kg = secondary_kg[0].to(e1.device)
+            S2 = secondary_kg.get_prompt_logits(e1,r)
+            S2 = S2[torch.arange(S.shape[0]), e2].unsqueeze(1)
+            S = (S+S2)/2
         return S
     
 
-def get_conve_bert_kg_state_dict(state_dict):
-    kg_state_dict = dict()
-    for param_name in state_dict['state_dict'].keys():
-        if param_name.split('.',1)[0] == "kg":
-            kg_state_dict[param_name.split('.', 1)[1]] = state_dict['state_dict'][param_name]
-    return kg_state_dict
 
-
-def get_distmult_bert_kg_state_dict(state_dict):
+def get_plm_kg_state_dict(state_dict):
     kg_state_dict = dict()
     for param_name in state_dict['state_dict'].keys():
         if param_name.split('.',1)[0] == "kg":
