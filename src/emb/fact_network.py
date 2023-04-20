@@ -311,7 +311,7 @@ class DistMult_BERT(DistMult):
     def forward_fact(self, e1, r, e2, kg):
         kg = kg.to(e1.device)
         S = kg.get_prompt_logits(e1,r)
-        S = S[torch.arange(S.shape[0]), e2]
+        S = S[torch.arange(S.shape[0]), e2].unsqueeze(1)
         return S
     
 

@@ -16,6 +16,6 @@ hp_range = {
     "action_dropout_rate": [.95],
     "bandwidth": [200, 256, 400, 512],
     "relation_only": [True, False],
-    "learning_rate": [uniform(1e-4, 1e-3) for _ in range(10)],
-    "weight_decay": [0.02, 0.03, 0.01]
+    "learning_rate": [uniform(0.00005, 0.001) for _ in range(12)],
+    "weight_decay": [0.02, 0.015, 0.01]
 }

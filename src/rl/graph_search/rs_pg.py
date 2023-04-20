@@ -12,7 +12,7 @@ from tqdm import tqdm
 import torch
 
 from src.emb.fact_network import get_conve_nn_state_dict, get_conve_kg_state_dict, \
-    get_complex_kg_state_dict, get_distmult_kg_state_dict
+    get_complex_kg_state_dict, get_distmult_kg_state_dict, get_distmult_bert_kg_state_dict
 from src.rl.graph_search.pg import PolicyGradient
 import src.utils.ops as ops
 from src.utils.ops import zeros_var_cuda
@@ -37,7 +37,7 @@ class RewardShapingPolicyGradient(PolicyGradient):
             self.fn.load_state_dict(fn_nn_state_dict)
         elif fn_model == 'distmult':
             fn_state_dict = torch.load(args.distmult_state_dict_path)
-            fn_kg_state_dict = get_distmult_kg_state_dict(fn_state_dict)
+            fn_kg_state_dict = get_distmult_kg_state_dict(fn_state_dict) if not args.kg_bert else get_distmult_bert_kg_state_dict(fn_state_dict)
         elif fn_model == 'complex':
             fn_state_dict = torch.load(args.complex_state_dict_path)
             fn_kg_state_dict = get_complex_kg_state_dict(fn_state_dict)

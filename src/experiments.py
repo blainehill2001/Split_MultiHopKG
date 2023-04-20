@@ -151,7 +151,7 @@ def initialize_model_directory(args, random_seed=None):
         hyperparam_sig
     )
     if args.kg_bert:
-        model_sub_dir += '-bertKG'
+        model_sub_dir += '-plm'
     if args.model == 'set':
         model_sub_dir += '-{}'.format(args.beam_size)
         model_sub_dir += '-{}'.format(args.num_paths_per_entity)
@@ -205,7 +205,7 @@ def construct_model(args):
             fn = DistMult(fn_args) if not args.kg_bert else DistMult_BERT(fn_args)
             fn_kg = KnowledgeGraph(fn_args) if not args.kg_bert else KnowledgeGraphBert(fn_args)
         elif fn_model == 'conve':
-            fn = ConvE(fn_args, kg.num_entities) if not args.kg_bert else ConvE_BERT(fn_args, kg.num_entities)
+            fn = ConvE(fn_args, kg.num_entities)
             fn_kg = KnowledgeGraph(fn_args) if not args.kg_bert else KnowledgeGraphBert(fn_args)
         lf = RewardShapingPolicyGradient(args, kg, pn, fn_kg, fn)
     elif args.model == 'complex':
@@ -215,7 +215,7 @@ def construct_model(args):
         fn = DistMult(args) if not args.kg_bert else DistMult_BERT(args)
         lf = EmbeddingBasedMethod(args, kg, fn)
     elif args.model == 'conve':
-        fn = ConvE(args, kg.num_entities) if not args.kg_bert else ConvE_BERT(args, kg.num_entities)
+        fn = ConvE(args, kg.num_entities)
         lf = EmbeddingBasedMethod(args, kg, fn)
     else:
         raise NotImplementedError

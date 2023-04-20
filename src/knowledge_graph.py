@@ -421,8 +421,8 @@ class KnowledgeGraphBert(KnowledgeGraph):
         super(KnowledgeGraphBert, self).__init__(args)
 
 
-        self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("bert","bert-large-uncased")
-        # self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("t5","t5-large")
+        # self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("bert","bert-large-uncased")
+        self.plm, self.tokenizer, self.model_config, self.WrapperClass = load_plm("t5","t5-base")
 
         # define verbalizer
         entity_labels = get_verbalizer(self.id2entity)
@@ -464,7 +464,7 @@ class KnowledgeGraphBert(KnowledgeGraph):
             max_seq_length=60,
             batch_size=len(data),
             shuffle=False,
-            # decoder_max_length=10,
+            decoder_max_length=10,
         )
         for d in data_loader:
             d = to_device(d,batch_head.device)

@@ -1,2 +1,3 @@
 ** Grid Search **
-* 30 hyperparameter combinations to try
+* 36 hyperparameter combinations to try
+* Hyperparameter Set 0:
