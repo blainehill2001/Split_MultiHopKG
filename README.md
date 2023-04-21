@@ -53,7 +53,7 @@ Then the following commands can be used to train the proposed models and baselin
 ```
 ./experiment-emb.sh configs/rich_<dataset>-<emb_model>.sh --train <gpu-ID>
 ```
-The following embedding-based models are implemented: `distmult`, `complex`, `conve` and `plm` (extension). 
+The following embedding-based models are implemented: `distmult`, `complex`, `conve` and `plm` (prompt learning extension). 
 
 2. Train RL models (policy gradient)
 ```

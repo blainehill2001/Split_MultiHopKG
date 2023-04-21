@@ -258,15 +258,16 @@ class FnPLM(nn.Module):
         return S
 
     def forward_fact(self, e1, r, e2, kg, secondary_kg=None):
-        kg = kg.to(e1.device)
-        S = kg.get_prompt_logits(e1,r)
-        S = S[torch.arange(S.shape[0]), e2].unsqueeze(1)
-        if secondary_kg is not None:
-            secondary_kg = secondary_kg[0].to(e1.device)
-            S2 = secondary_kg.get_prompt_logits(e1,r)
-            S2 = S2[torch.arange(S.shape[0]), e2].unsqueeze(1)
-            S = (S+S2)/2
-        return S
+        with torch.no_grad():
+            kg = kg.to(e1.device)
+            S = kg.get_prompt_logits(e1,r)
+            S = S[torch.arange(S.shape[0]), e2].unsqueeze(1)
+            if secondary_kg is not None:
+                secondary_kg = secondary_kg[0].to(e1.device)
+                S2 = secondary_kg.get_prompt_logits(e1,r)
+                S2 = S2[torch.arange(S.shape[0]), e2].unsqueeze(1)
+                S = (S+S2)/2
+            return S
     
 
 

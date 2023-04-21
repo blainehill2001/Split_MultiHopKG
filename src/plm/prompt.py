@@ -1,3 +1,8 @@
+"""
+ Jason's Extension
+ Set template and verbalizer for prompt learning
+"""
+
 from openprompt.plms import load_plm
 from openprompt.data_utils import InputExample
 

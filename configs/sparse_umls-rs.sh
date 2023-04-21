@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 data_dir="data/umls-sparse"
-# model="point.rs.plm"
-model="point.rs.plms"
+model="point.rs.plm"
 group_examples_by_query="False"
 use_action_space_bucketing="True"
 
@@ -14,12 +13,12 @@ history_num_layers=3
 num_rollouts=20
 num_rollout_steps=2
 bucket_interval=10
-num_epochs=1000
+num_epochs=500
 num_wait_epochs=200
 num_peek_epochs=2
 batch_size=32
 train_batch_size=32
-dev_batch_size=16
+dev_batch_size=32
 learning_rate=0.001
 baseline="n/a"
 grad_norm=5
@@ -33,8 +32,8 @@ relation_only="False"
 beam_size=128
 
 # pre-trained embedding based model checkpoints
-plm_state_dict_path="model/umls-rich-plm-xavier-lr0.0019292911586142824-wd0.02-0.1/model_best.tar"
-plm_state_dict_path2="model/umls-rich-plm-xavier-lr0.0019292911586142824-wd0.02-0.1/model_best.tar"
+plm_state_dict_path="model/umls-rich-distmult-xavier-200-200-0.0019292911586142824-0.02-0.714-t5-base-plm/model_best.tar"
+plm_state_dict_path2="none"
 
 
 distmult_state_dict_path="none"
