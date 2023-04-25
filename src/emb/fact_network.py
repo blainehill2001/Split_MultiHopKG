@@ -309,10 +309,11 @@ class DistMult_BERT(DistMult):
         return S
 
     def forward_fact(self, e1, r, e2, kg):
-        kg = kg.to(e1.device)
-        S = kg.get_bert_logits(e1,r)
-        S = S[torch.arange(S.shape[0]), e2]
-        return S
+        with torch.no_grad():
+            kg = kg.to(e1.device)
+            S = kg.get_bert_logits(e1,r)
+            S = S[torch.arange(S.shape[0]), e2]
+            return S.unsqueeze(1)
     
 
 def get_conve_bert_kg_state_dict(state_dict):

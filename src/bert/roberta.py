@@ -16,7 +16,7 @@ class RoBertaEmbedding(nn.Module):
     def __init__(self, labels) -> None:
         super(RoBertaEmbedding, self).__init__()
 
-        self.bert = RobertaForSequenceClassification.from_pretrained('roberta-base', hidden_dropout_prob=0.5, num_labels=labels)
+        self.bert = RobertaForSequenceClassification.from_pretrained('roberta-base', hidden_dropout_prob=0.2, num_labels=labels)
         self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base', add_prefix_space=True)
 
         # # freeze roberta for now
